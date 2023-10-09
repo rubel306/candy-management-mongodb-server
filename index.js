@@ -10,7 +10,6 @@ app.use(cors());
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.3cydldd.mongodb.net/?retryWrites=true&w=majority`;
-console.log("DB_uri:", uri);
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
@@ -23,6 +22,19 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+    const candyCollection = client.db("candyDB").collection("candies");
+
+    //show candies by get method
+    app.get("/candies", async (req, res) => {
+      const cursor = await candyCollection.find().toArray();
+      res.send(cursor);
+    });
+    //post method
+    app.post("/add", async (req, res) => {
+      const addCandy = req.body;
+      const result = await candyCollection.insertOne(addCandy);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
@@ -31,17 +43,11 @@ async function run() {
     );
   } finally {
     // Ensures that the client will close when you finish/error
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
 
-//post method
-app.post("/add", (req, res) => {
-  const addCandy = req.body;
-  res.send(addCandy);
-  console.log(addCandy);
-});
 //creating server port
 app.get("/", (req, res) => {
   res.send("Welcome to Candy Management System with MongoDb ..");
