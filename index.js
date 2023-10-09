@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const port = process.env.PORT || 5000;
 const app = express();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 //middleware
 app.use(cors());
@@ -29,10 +29,47 @@ async function run() {
       const cursor = await candyCollection.find().toArray();
       res.send(cursor);
     });
+
+    //get one candy for update
+    app.get("/update-candy/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await candyCollection.findOne(query);
+      res.send(result);
+    });
+    //delete one item based on id
+    app.delete("/candy/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await candyCollection.deleteOne(query);
+      res.send(result);
+    });
     //post method
     app.post("/add", async (req, res) => {
       const addCandy = req.body;
       const result = await candyCollection.insertOne(addCandy);
+      res.send(result);
+    });
+
+    //update candy by put method
+    app.put("/update-candy/:id", async (req, res) => {
+      const id = req.params.id;
+      const existCandy = req.body;
+      const query = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateCandy = {
+        $set: {
+          name: existCandy.name,
+          country: existCandy.country,
+          category: existCandy.category,
+          photo: existCandy.photo,
+        },
+      };
+      const result = await candyCollection.updateOne(
+        query,
+        updateCandy,
+        options
+      );
       res.send(result);
     });
 
